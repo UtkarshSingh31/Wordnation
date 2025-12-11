@@ -1,13 +1,4 @@
-import streamlit as st
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
-from dotenv import load_dotenv
-from langchain_core.output_parsers import StrOutputParser
-from langchain.schema.runnable import RunnablePassthrough,RunnableParallel
-
-load_dotenv()
-
-model=ChatGoogleGenerativeAI(model='gemini-2.5-flash')
 
 prompt1 = ChatPromptTemplate.from_template("""
 You are a vocabulary explainer who speaks in simple A2 to B1 English.
@@ -46,15 +37,6 @@ Synonyms:
 """
 )
 
-parser=StrOutputParser()
-
-word_meaning_chain= prompt1 | model | parser
-
-example_chain=RunnableParallel({
-    'word_meaning': RunnablePassthrough(),
-    'examples': prompt2 | model | parser
-})
-
 final_prompt = ChatPromptTemplate.from_template("""
 You are a friendly English tutor.
 
@@ -78,26 +60,3 @@ Tone: friendly, simple English (A2 to B1 level).
 FINAL EXPLANATION:
 """)
 
-
-final_chain=(
-    word_meaning_chain|
-    example_chain |
-    final_prompt|
-    model|
-    StrOutputParser()
-)
-
-st.title("📘 Vocabulary Explainer — AI Powered")
-st.write("Enter a word below and learn this in simple English!")
-
-word = st.text_input("Enter a word:", "")
-
-if st.button("Explain"):
-    if not word.strip():
-        st.warning("Please enter a word.")
-    else:
-        with st.spinner("Thinking..."):
-            result= final_chain.invoke({'word':word})
-        
-        st.markdown("Explantion: ")
-        st.write(result)
