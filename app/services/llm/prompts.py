@@ -38,9 +38,33 @@ Synonyms:
 )
 
 final_prompt = ChatPromptTemplate.from_template("""
-You are a friendly English tutor.
+You are a system that returns structured data ONLY.
 
-Here is a word explanation and its example sentences:
+====================
+OUTPUT CONTRACT
+====================
+Return a SINGLE valid JSON object.
+Do NOT include markdown.
+Do NOT include explanations.
+Do NOT include extra keys.
+Do NOT include trailing text.
+
+The JSON MUST strictly follow this schema:
+
+{{
+  "word": string,
+  "meaning_text": string,                                              
+  "memory_trick": string,
+  "examples": string[],
+  "synonyms": string[]
+}}
+
+====================
+INPUT DATA
+====================
+
+WORD:
+{word}
 
 MEANING:
 {word_meaning}
@@ -48,15 +72,16 @@ MEANING:
 EXAMPLES & SYNONYMS:
 {examples}
 
-TASK:
-Write one clean final explanation that includes:
-- the meaning (rewritten simply),
-- 2 to 3 of the example sentences (the best ones),
-- a short list of the most useful synonyms,
-- an optional memory trick if helpful.
+====================
+RULES
+====================
+- Use ONLY the provided meaning.
+- Pick the BEST 2–3 examples.
+- Synonyms must match THIS meaning only.
+- If no memory trick fits, return an empty string.
 
-Tone: friendly, simple English (A2 to B1 level).
-
-FINAL EXPLANATION:
+====================
+OUTPUT
+====================
+Return ONLY the JSON object.
 """)
-

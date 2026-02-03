@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vocab Tutor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar: chat list -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <button class="btn-new-chat" id="btnNewChat" title="New chat">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New chat
+        </button>
+      </div>
+      <nav class="chat-list" id="chatList">
+        <!-- Chats injected by JS -->
+      </nav>
+      <div class="sidebar-footer">
+        <span class="api-status" id="apiStatus">API: checking…</span>
+      </div>
+    </aside>
+
+    <!-- Main: messages + input -->
+    <main class="main">
+      <div class="messages" id="messages">
+        <div class="welcome" id="welcome">
+          <h1>Vocab Tutor</h1>
+          <p>Type a word below to get meaning, memory trick, examples and synonyms.</p>
+        </div>
+      </div>
+      <div class="input-area">
+        <form class="input-form" id="inputForm">
+          <textarea
+            id="messageInput"
+            rows="1"
+            placeholder="Enter a word…"
+            maxlength="200"
+          ></textarea>
+          <button type="submit" class="btn-send" id="btnSend" title="Send">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 from app.routers import vocab
 
 def create_app()->FastAPI:
@@ -12,8 +12,16 @@ def create_app()->FastAPI:
         redoc_url="/redoc"
     )
 
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     @app.get("/health",tags=["system"])
-    async def health():
+    def health():
         return {"status":"ok"}
     
     app.include_router(vocab.router,prefix="/v1/vocab",tags=["Vocabulary"])
