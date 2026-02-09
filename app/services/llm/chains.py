@@ -1,7 +1,7 @@
 from services.llm.provider import model
 from services.llm.prompts import prompt1,prompt2,final_prompt
 from langchain_core.output_parsers import StrOutputParser,JsonOutputParser
-from langchain.schema.runnable import RunnablePassthrough,RunnableParallel
+from langchain_core.runnables import RunnablePassthrough,RunnableParallel
 
 parser=StrOutputParser()
 parser1=JsonOutputParser()
