@@ -1,5 +1,5 @@
-from app.services.llm.provider import model
-from app.services.llm.prompts import prompt1,prompt2,final_prompt
+from services.llm.provider import model
+from services.llm.prompts import prompt1,prompt2,final_prompt
 from langchain_core.output_parsers import StrOutputParser,JsonOutputParser
 from langchain.schema.runnable import RunnablePassthrough,RunnableParallel
 

@@ -1,6 +1,6 @@
-from app.services.llm.provider import model
-from app.services.llm.prompts import final_prompt
-from app.services.llm.chains import word_meaning_chain,example_chain,parser1
+from services.llm.provider import model
+from services.llm.prompts import final_prompt
+from services.llm.chains import word_meaning_chain,example_chain,parser1
 
 final_chain=(
     word_meaning_chain|
