@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const API_BASE = "http://127.0.0.1:8000";
+  const API_BASE = "https://wordnation.onrender.com";
   const MEANING_URL = `${API_BASE}/v1/vocab/meaning`;
   const HEALTH_URL = `${API_BASE}/health`;
 
