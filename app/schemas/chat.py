@@ -7,5 +7,6 @@ class ChatResponse(BaseModel):
     memory_trick:str
     examples:List[str]
     synonyms:List[str]
+    antonyms:List[str] = []
 
 

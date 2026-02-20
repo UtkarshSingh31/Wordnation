@@ -1,24 +1,103 @@
 (function () {
   "use strict";
 
-  const API_BASE = "https://wordnation.onrender.com";
+  const API_BASE = (typeof window !== "undefined" && window.API_BASE_OVERRIDE)
+    || (typeof window !== "undefined" && (location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.protocol === "file:")
+      ? "http://127.0.0.1:8000"
+      : "https://wordnation.onrender.com");
   const MEANING_URL = `${API_BASE}/v1/vocab/meaning`;
+  const DAILY_URL = `${API_BASE}/v1/vocab/daily`;
   const HEALTH_URL = `${API_BASE}/health`;
 
+  // ============ DOM Elements ============
   const elements = {
+    // Pages
+    homePage: document.getElementById("homePage"),
+    chatsPage: document.getElementById("chatsPage"),
+    
+    // Sidebar
+    navHome: document.getElementById("navHome"),
+    navChats: document.getElementById("navChats"),
+    btnThemeToggle: document.getElementById("btnThemeToggle"),
+    btnNewChat: document.getElementById("btnNewChat"),
     chatList: document.getElementById("chatList"),
+    apiStatus: document.getElementById("apiStatus"),
+    
+    // Home page
+    wordForm: document.getElementById("wordForm"),
+    wordInput: document.getElementById("wordInput"),
+    wordResult: document.getElementById("wordResult"),
+    dailyVocabContainer: document.getElementById("dailyVocabContainer"),
+    
+    // Chat page
     messages: document.getElementById("messages"),
     welcome: document.getElementById("welcome"),
     inputForm: document.getElementById("inputForm"),
     messageInput: document.getElementById("messageInput"),
     btnSend: document.getElementById("btnSend"),
-    btnNewChat: document.getElementById("btnNewChat"),
-    apiStatus: document.getElementById("apiStatus"),
   };
 
+  // ============ State ============
   let chats = [];
   let currentChatId = null;
 
+  // ============ Theme Management ============
+  function initTheme() {
+    const savedTheme = localStorage.getItem("vocab-tutor-theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = savedTheme === null ? prefersDark : savedTheme === "dark";
+    
+    setTheme(isDark ? "dark" : "light");
+  }
+
+  function setTheme(theme) {
+    const isDark = theme === "dark";
+    const html = document.documentElement;
+    
+    if (isDark) {
+      html.classList.remove("light-mode");
+    } else {
+      html.classList.add("light-mode");
+    }
+    
+    localStorage.setItem("vocab-tutor-theme", theme);
+    updateThemeIcons(isDark);
+  }
+
+  function updateThemeIcons(isDark) {
+    const sunIcon = elements.btnThemeToggle.querySelector(".icon-sun");
+    const moonIcon = elements.btnThemeToggle.querySelector(".icon-moon");
+    
+    if (isDark) {
+      sunIcon.style.display = "block";
+      moonIcon.style.display = "none";
+    } else {
+      sunIcon.style.display = "none";
+      moonIcon.style.display = "block";
+    }
+  }
+
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = !html.classList.contains("light-mode");
+    setTheme(isDark ? "light" : "dark");
+  }
+
+  // ============ Page Navigation ============
+  function switchPage(pageName) {
+    elements.homePage.style.display = pageName === "home" ? "flex" : "none";
+    elements.chatsPage.style.display = pageName === "chats" ? "flex" : "none";
+    
+    document.querySelectorAll(".nav-item").forEach(item => {
+      item.classList.toggle("active", item.dataset.page === pageName);
+    });
+    
+    if (pageName === "chats" && chats.length === 0) {
+      newChat();
+    }
+  }
+
+  // ============ UUID Generation ============
   function uuid() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
       const r = (Math.random() * 16) | 0;
@@ -27,6 +106,7 @@
     });
   }
 
+  // ============ LocalStorage ============
   function loadChats() {
     try {
       const raw = localStorage.getItem("vocab-tutor-chats");
@@ -41,6 +121,7 @@
     localStorage.setItem("vocab-tutor-chats", JSON.stringify(chats));
   }
 
+  // ============ API Health Check ============
   function checkApi() {
     fetch(HEALTH_URL, { method: "GET" })
       .then((r) => {
@@ -55,6 +136,7 @@
       });
   }
 
+  // ============ Chat Management ============
   function renderChatList() {
     elements.chatList.innerHTML = "";
     chats.forEach((chat) => {
@@ -111,6 +193,7 @@
     renderChatList();
   }
 
+  // ============ Message Rendering ============
   function hideWelcome() {
     if (elements.welcome.parentNode) elements.welcome.remove();
   }
@@ -152,7 +235,7 @@
 
   function formatBotMessage(data) {
     if (!data) return "";
-    const { word, meaning_text, memory_trick, examples = [], synonyms = [] } = data;
+    const { word, meaning_text, memory_trick, examples = [], synonyms = [], antonyms = [] } = data;
     let html = '<div class="word-title">' + escapeHtml(word || "") + "</div>";
     if (meaning_text) html += "<p>" + escapeHtml(meaning_text) + "</p>";
     if (memory_trick) {
@@ -170,6 +253,13 @@
       html += '<div class="section"><div class="section-title">Synonyms</div><ul>';
       synonyms.forEach((s) => {
         html += "<li>" + escapeHtml(s) + "</li>";
+      });
+      html += "</ul></div>";
+    }
+    if (antonyms.length) {
+      html += '<div class="section"><div class="section-title">Antonyms</div><ul>';
+      antonyms.forEach((a) => {
+        html += "<li>" + escapeHtml(a) + "</li>";
       });
       html += "</ul></div>";
     }
@@ -195,6 +285,7 @@
     elements.btnSend.disabled = loading;
   }
 
+  // ============ Word Lookup ============
   async function sendWord(word) {
     word = word.trim();
     if (!word) return;
@@ -237,6 +328,80 @@
     }
   }
 
+  // ============ Home Page - Word Lookup ============
+  async function searchWord() {
+    const word = elements.wordInput.value.trim();
+    if (!word) return;
+
+    elements.wordResult.innerHTML = '<div style="display:flex;align-items:center;gap:8px;"><div class="loading-spinner"></div><p>Loading...</p></div>';
+    elements.wordResult.style.display = "block";
+
+    try {
+      const res = await fetch(MEANING_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        elements.wordResult.innerHTML = '<div class="error-bubble">' + escapeHtml(data.detail || "Request failed.") + "</div>";
+      } else {
+        elements.wordResult.innerHTML = formatBotMessage(data);
+      }
+    } catch (err) {
+      elements.wordResult.innerHTML = '<div class="error-bubble">Could not reach API. Is the server running?</div>';
+    }
+  }
+
+  // ============ Daily Vocab ============
+  async function loadDailyVocab() {
+    try {
+      const res = await fetch(DAILY_URL, { method: "GET" });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.words) {
+        elements.dailyVocabContainer.innerHTML = '<p class="error-bubble">Failed to load daily vocab.</p>';
+        return;
+      }
+
+      elements.dailyVocabContainer.innerHTML = "";
+      data.words.forEach((word) => {
+        const card = document.createElement("div");
+        card.className = "vocab-card";
+        card.innerHTML = `
+          <div class="vocab-word">${escapeHtml(word.word)}</div>
+          <div class="vocab-meaning">${escapeHtml(word.meaning_text || "")}</div>
+        `;
+        card.addEventListener("click", () => {
+          elements.wordInput.value = word.word;
+          searchWord();
+        });
+        elements.dailyVocabContainer.appendChild(card);
+      });
+    } catch (err) {
+      elements.dailyVocabContainer.innerHTML = '<p class="error-bubble">Could not reach API.</p>';
+    }
+  }
+
+  // ============ Event Listeners ============
+  elements.btnThemeToggle.addEventListener("click", toggleTheme);
+
+  elements.navHome.addEventListener("click", () => switchPage("home"));
+  elements.navChats.addEventListener("click", () => switchPage("chats"));
+
+  elements.wordForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    searchWord();
+  });
+
+  elements.wordInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      searchWord();
+    }
+  });
+
   elements.inputForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const value = elements.messageInput.value.trim();
@@ -258,15 +423,20 @@
     }
   });
 
-  elements.btnNewChat.addEventListener("click", newChat);
+  elements.btnNewChat.addEventListener("click", () => {
+    newChat();
+    switchPage("chats");
+  });
 
-  loadChats();
-  if (chats.length === 0) newChat();
-  else {
-    currentChatId = chats[0].id;
-    switchChat(currentChatId);
+  // ============ Initialization ============
+  function init() {
+    initTheme();
+    loadChats();
+    switchPage("home");
+    loadDailyVocab();
+    checkApi();
+    setInterval(checkApi, 15000);
   }
-  renderChatList();
-  checkApi();
-  setInterval(checkApi, 15000);
+
+  init();
 })();

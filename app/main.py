@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import vocab
+from app.routers import vocab
 
 def create_app()->FastAPI:
     
